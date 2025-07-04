@@ -3,12 +3,10 @@ import os
 from dotenv import load_dotenv
 import tempfile
 from datetime import datetime
-import requests
-from openai import OpenAI  # Για μελλοντική αναβάθμιση
+import requests  # Για DeepInfra API
 
-# 🔐 Φόρτωσε API Keys
-load_dotenv()
-DEEPINFRA_API_KEY = os.getenv("DEEPINFRA_API_KEY")  # Δωρεάν
+# 🔐 Φόρτωση ρυθμίσεων
+load_dotenv()  # Φόρτωση .env (τοπικά)
 
 # 🎯 Κατηγορίες επιχειρήσεων
 business_types = [
@@ -21,28 +19,12 @@ business_types = [
 st.set_page_config(page_title="Smart Social Tool", layout="centered", page_icon="📲")
 
 # 📌 Sidebar με ρυθμίσεις
+# 📌 Sidebar με ρυθμίσεις
 with st.sidebar:
     st.header("⚙️ Ρυθμίσεις")
-    
-    # 👉 Επιλογή AI Provider
-    ai_provider = st.radio(
-        "AI Provider",
-        ["DeepInfra (Δωρεάν)", "OpenAI (Αναβάθμιση)"],
-        index=0  # Προεπιλογή DeepInfra
-    )
-    
-    if ai_provider == "DeepInfra (Δωρεάν)":
-        model = st.selectbox(
-            "Μοντέλο", 
-            ["mistralai/Mixtral-8x7B-Instruct-v0.1", "meta-llama/Llama-2-70b-chat-hf"]
-        )
-    else:
-        model = st.selectbox(
-            "Μοντέλο", 
-            ["gpt-3.5-turbo", "gpt-4"]
-        )
-    
-    temperature = st.slider("Creativity (temperature)", 0.0, 1.0, 0.7)
+    ai_provider = st.radio("Πάροχος AI", ["DeepInfra (Δωρεάν)", "OpenAI (Αναβάθμιση)"])
+    model = st.selectbox("Μοντέλο", ["mistralai/Mixtral-8x7B-Instruct-v0.1", "gpt-3.5-turbo"])
+    temperature = st.slider("Δημιουργικότητα (temperature)", 0.0, 1.0, 0.7)
 
 # 🎨 Κύρια σελίδα (το ίδιο όπως πριν)
 st.title("📲 Smart Social Assistant")
