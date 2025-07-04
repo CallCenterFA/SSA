@@ -9,7 +9,6 @@ from openai import OpenAI  # Για μελλοντική αναβάθμιση
 # 🔐 Φόρτωσε API Keys
 load_dotenv()
 DEEPINFRA_API_KEY = os.getenv("DEEPINFRA_API_KEY")  # Δωρεάν
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")        # Για αναβάθμιση
 
 # 🎯 Κατηγορίες επιχειρήσεων
 business_types = [
@@ -100,7 +99,7 @@ if st.button("🎯 Δημιουργία Post") and uploaded_file:
                 )
                 content = response.json()[0]["generated_text"]
             else:
-                client = OpenAI(api_key=OPENAI_API_KEY)
+                client = OpenAI
                 response = client.chat.completions.create(
                     model=model,
                     messages=[{"role": "user", "content": prompt}],
