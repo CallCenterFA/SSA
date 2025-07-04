@@ -1,13 +1,15 @@
 import streamlit as st
-import openai
 import os
 from dotenv import load_dotenv
 import tempfile
 from datetime import datetime
+import requests
+from openai import OpenAI  # Για μελλοντική αναβάθμιση
 
-# 🔐 Φόρτωσε το API Key
+# 🔐 Φόρτωσε API Keys
 load_dotenv()
-openai.api_key = os.getenv("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")
+DEEPINFRA_API_KEY = os.getenv("DEEPINFRA_API_KEY")  # Δωρεάν
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")        # Για αναβάθμιση
 
 # 🎯 Κατηγορίες επιχειρήσεων
 business_types = [
@@ -22,37 +24,55 @@ st.set_page_config(page_title="Smart Social Tool", layout="centered", page_icon=
 # 📌 Sidebar με ρυθμίσεις
 with st.sidebar:
     st.header("⚙️ Ρυθμίσεις")
-    model = st.selectbox("Μοντέλο", ["gpt-4", "gpt-3.5-turbo"])
+    
+    # 👉 Επιλογή AI Provider
+    ai_provider = st.radio(
+        "AI Provider",
+        ["DeepInfra (Δωρεάν)", "OpenAI (Αναβάθμιση)"],
+        index=0  # Προεπιλογή DeepInfra
+    )
+    
+    if ai_provider == "DeepInfra (Δωρεάν)":
+        model = st.selectbox(
+            "Μοντέλο", 
+            ["mistralai/Mixtral-8x7B-Instruct-v0.1", "meta-llama/Llama-2-70b-chat-hf"]
+        )
+    else:
+        model = st.selectbox(
+            "Μοντέλο", 
+            ["gpt-3.5-turbo", "gpt-4"]
+        )
+    
     temperature = st.slider("Creativity (temperature)", 0.0, 1.0, 0.7)
 
-# 🎨 Κύρια σελίδα
+# 🎨 Κύρια σελίδα (το ίδιο όπως πριν)
 st.title("📲 Smart Social Assistant")
 st.subheader("Αυτόματη παραγωγή περιεχομένου για social media")
 
-# 👉 Επιλογή επιχείρησης
+# 👉 Επιλογή επιχείρησης (το ίδιο)
 selected_type = st.selectbox("Είδος επιχείρησης", business_types)
 
-# 👉 Ανεβάζουμε media (εικόνα/βίντεο)
+# 👉 Ανεβάζουμε media (εικόνα/βίντεο) (το ίδιο)
 uploaded_file = st.file_uploader(
     "Ανέβασε μια εικόνα ή ένα video", 
     type=["png", "jpg", "jpeg", "mp4", "mov"]
 )
 
-# 👉 Προεπισκόπηση media
+# 👉 Προεπισκόπηση media (το ίδιο)
 if uploaded_file:
     if uploaded_file.type.startswith('image'):
-        st.image(uploaded_file, caption="Προεπισκόπηση εικόνας", use_column_width=True)
+        st.image(uploaded_file, caption="Προεπισκόπηση εικόνας", use_container_width=True)
     elif uploaded_file.type.startswith('video'):
         st.video(uploaded_file)
 
-# 👉 Περιγραφή περιεχομένου
+# 👉 Περιγραφή περιεχομένου (το ίδιο)
 description = st.text_area("Τι δείχνει περίπου το περιεχόμενο;", "")
 
 # 🎯 Δημιουργία Post
 if st.button("🎯 Δημιουργία Post") and uploaded_file:
     with st.spinner("⏳ Δημιουργία περιεχομένου..."):
         try:
-            # 📝 Prompt engineering
+            # 📝 Prompt engineering (το ίδιο)
             prompt = f"""
             Είμαι social media manager για {selected_type}.
             Το περιεχόμενο δείχνει: {description}
@@ -63,21 +83,37 @@ if st.button("🎯 Δημιουργία Post") and uploaded_file:
             3. Μια πρόταση για τίτλο (για Reels/TikTok).
             """
             
-            # 🚀 OpenAI API Call
-            response = openai.ChatCompletion.create(
-                model=model,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=temperature
-            )
+            # 🚀 AI API Call (Αυτό αλλάζει)
+            if ai_provider == "DeepInfra (Δωρεάν)":
+                headers = {
+                    "Authorization": f"Bearer {DEEPINFRA_API_KEY}",
+                    "Content-Type": "application/json"
+                }
+                data = {
+                    "inputs": prompt,
+                    "parameters": {"max_new_tokens": 500, "temperature": temperature}
+                }
+                response = requests.post(
+                    f"https://api.deepinfra.com/v1/inference/{model}",
+                    headers=headers,
+                    json=data
+                )
+                content = response.json()[0]["generated_text"]
+            else:
+                client = OpenAI(api_key=OPENAI_API_KEY)
+                response = client.chat.completions.create(
+                    model=model,
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=temperature
+                )
+                content = response.choices[0].message.content
             
-            content = response.choices[0].message.content
-            
-            # ✅ Εμφάνιση αποτελέσματος
-            st.success("✅ Έτοιμο!")
+            # ✅ Εμφάνιση αποτελέσματος (το ίδιο)
+            st.success(f"✅ Έτοιμο (με {ai_provider})!")
             st.markdown("### ✍️ Περιγραφή Post")
             st.write(content)
             
-            # 💾 Αποθήκευση σε TXT
+            # 💾 Αποθήκευση σε TXT (το ίδιο)
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"social_post_{timestamp}.txt"
             
