@@ -4,9 +4,26 @@ from dotenv import load_dotenv
 import tempfile
 from datetime import datetime
 import requests  # Για DeepInfra API
+import openai  # Για OpenAI API
 
 # 🔐 Φόρτωση ρυθμίσεων
 load_dotenv()  # Φόρτωση .env (τοπικά)
+DEEPINFRA_API_KEY = os.getenv("DEEPINFRA_API_KEY")
+
+# Debug: Εμφάνισε working directory
+print("Current dir:", os.getcwd())
+print("Files in dir:", os.listdir())
+
+# Φόρτωση .env με αυστηρό έλεγχο
+if not load_dotenv('.env'):  # Προσθήκη ρητής διαδρομής
+    raise RuntimeError("⚠️ Failed to load .env file!")
+
+# Εναλλακτικός έλεγχος
+DEEPINFRA_API_KEY = os.getenv('DEEPINFRA_API_KEY')
+if not DEEPINFRA_API_KEY:
+    raise ValueError("⚠️ Key not found! Check .env file contents")
+else:
+    print("Key successfully loaded! First 2 chars:", DEEPINFRA_API_KEY[:2])
 
 # 🎯 Κατηγορίες επιχειρήσεων
 business_types = [
@@ -79,14 +96,14 @@ if st.button("🎯 Δημιουργία Post") and uploaded_file:
                     headers=headers,
                     json=data
                 )
-                content = response.json()[0]["generated_text"]
             else:
-                client = OpenAI
-                response = client.chat.completions.create(
+                openai.api_key = os.getenv("OPENAI_API_KEY")
+                response = openai.ChatCompletion.create(
                     model=model,
                     messages=[{"role": "user", "content": prompt}],
                     temperature=temperature
                 )
+                content = response.choices[0].message.content
                 content = response.choices[0].message.content
             
             # ✅ Εμφάνιση αποτελέσματος (το ίδιο)
